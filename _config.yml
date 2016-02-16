@@ -69,11 +69,11 @@ theme: pacman
 ## Docs: http://hexo.io/docs/deployment.html
 deploy:
   type: git
-  repository: git@github.com:peison/peison.github.io.git
+  repository: https://github.com/peison/peison.github.io
   branch: master
 
 backup:
     type: git
     theme: pacman
     repository:
-       github: git@github.com:peison/peison.github.io.git,hexo      
+       github: https://github.com/Peison/peison.github.io/tree/hexo   
