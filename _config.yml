@@ -76,4 +76,4 @@ backup:
     type: git
     theme: pacman
     repository:
-       github: https://github.com/Peison/peison.github.io/tree/hexo   
+       github: git@github.com:peison/peison.github.io.git,hexo   
