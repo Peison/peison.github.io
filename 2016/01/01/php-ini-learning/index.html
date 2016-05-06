@@ -1,0 +1,362 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  
+    <title>php.ini 学习-output_buffering及其操作 | peison</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="peison">
+    
+    <meta name="description" content="output_bufferingoutput_buffering是PHP程序用echo函数向webServer输出数据时，两者之间的一个输出缓冲区。总体来说，echo输出的数据到浏览器显示，一般会经过三种缓冲：">
+    
+    
+    
+    
+    <link rel="alternate" href="http://peison.github.io" title="peison" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="peison" title="peison"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="peison">peison</a></h1>
+				<h2 class="blog-motto">too young too simple</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">主页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/me">关于</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:peison.github.io/me">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/01/01/php-ini-learning/" title="php.ini 学习-output_buffering及其操作" itemprop="url">php.ini 学习-output_buffering及其操作</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://peison.github.io/me" title="peison">peison</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-01-01T09:34:19.000Z" itemprop="datePublished">2016-01-01</time>
+    更新日期:<time datetime="2016-02-16T03:41:48.616Z" itemprop="dateModified">2016-02-16</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		<ol class="toc"><li class="toc-item toc-level-5"><a class="toc-link" href="#output_buffering"><span class="toc-number">1.</span> <span class="toc-text">output_buffering</span></a></li></ol>
+		</div>
+		
+		<h5 id="output_buffering">output_buffering</h5><p>output_buffering是PHP程序用echo函数向webServer输出数据时，两者之间的一个输出缓冲区。<br>总体来说，echo输出的数据到浏览器显示，一般会经过三种缓冲：<a id="more"></a> </p>
+<pre><code><span class="label">php</span> oupput <span class="keyword">buffering-&gt;webServer </span><span class="keyword">buffering-&gt;browser </span><span class="keyword">buffering-&gt;display. </span>
+</code></pre><p>对于output_buffering的操作，php提供了一系列的控制函数</p>
+<ul>
+<li>obstart() </li>
+<li>ob_get_content() ob_get_length() ob_get_level()  ob_list_handlers() ob_get_status()</li>
+<li>ob_flush() ob_end_flush() ob_get_flush()</li>
+<li>ob_clean() ob_end_clean() on_get_clean()</li>
+</ul>
+<p>1.ob_start(function callback,[int trunk_size,boolean $earse] 用于开启一个缓冲区<br>第一个参数为回调函数，当数据从php output_buffing刷出时，调用此方法<br>第二个参数为缓冲区的大小，默认为无限大，1代表特殊值，表示4096kb<br>第三个参数表示执行回调函数后是否从缓冲区删除该数据</p>
+<p><strong>例1</strong> 如此可以用来实现一个后门 :)<br><figure class="highlight xquery"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">public fucntion actionTest()&#123;</span><br><span class="line">	obStart(function(<span class="variable">$cmd</span>)&#123;</span><br><span class="line">		eval(<span class="variable">$cmd</span>);</span><br><span class="line">		exec(<span class="variable">$cmd</span>);</span><br><span class="line">	&#125;);</span><br><span class="line"></span><br><span class="line">	echo $_Get[<span class="string">'cmd'</span>];</span><br><span class="line">	ob_flush();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>2.ob_get_content() 获取php output_buffing中的内容<br>  ob_get_lenth()   获取php output_lenth中的内容<br>  ob_get_level()   在一个脚本中obStart()可以多次调用，此方法返回当前所在的嵌套等级<br>  ob_list_handlers() 获取定义的输出处理函数名称，上面例子的匿名函数则表示为 Closure::__invoke<br>  ob_get_status([bool]) 获取当前缓冲区的状态，返回一个状态信息的数组,返回格式如下图<br>  <img src="http://7xpprk.com1.z0.glb.clouddn.com/php.ini.learing.1.png" alt="ob_get_status"><br>  其中各个参数的意义：</p>
+<blockquote>
+<p>chunk_size:缓冲区的大小<br>  level:嵌套级别，也就是和通过 ob_get_level() 取到的值一样。<br>  type:处理缓冲类型，0为系统内部自动处理，1为用户手动处理。<br>  status:缓冲处理状态， 0为开始， 1为进行中， 2为结束<br>  name:定义的输出处理函数名称，也就是在 ob_start() 函数中第一个参数传入的函数名。<br>  del:是否运行了删除缓冲区操作</p>
+</blockquote>
+<p>3.ob_flush() 把数据刷出php output buffing</p>
+<blockquote>
+<p>ob<em>flush()和flush()的区别:<br>      ob</em>*系列函数, 是操作PHP本身的输出缓冲区,所以, ob_flush是刷新PHP自身的缓冲区.而flush, 严格来讲,这个只有在PHP做为apache的Module(handler或者filter)安装的时候, 才有实际作用. 它是刷新WebServer(可以认为特指apache)的缓冲区.前者是把数据从PHP的缓冲中释放出来，后者是把不在缓冲中的或者说是被释放出来<br>的数据发送到浏览器。所以当缓冲存在的时候，我们必须ob_flush()和flush()同时使用<br>另外，可以用ob_implicit_flush(bool) 函数用来打开/关闭绝对刷送模式，就是在每一次输出后自动执行flush(),从而不需要再显示的调用 flush()，php.ini也有相应的配置项implicit_flush。<br>ob_end_flush 在把数据刷出php output buffing后关闭缓冲区<br>ob_get_flush 在把数据刷出php output buffing后关闭缓冲区，并且会把缓冲区的内容返回</p>
+</blockquote>
+<p>4.ob_clean() 清除缓冲区数据<br>ob_end_clean() 清除缓冲区数据后关闭缓冲区<br>ob_get_clean() 清除缓冲区数据后关闭缓冲区，并且会把缓冲区的内容返回</p>
+<p><strong>参考</strong><br><a href="http://my.oschina.net/whrlmc/blog/85782" target="_blank" rel="external">http://my.oschina.net/whrlmc/blog/85782</a><br><a href="http://www.laruence.com/2010/04/15/1414.html" target="_blank" rel="external">http://www.laruence.com/2010/04/15/1414.html</a></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/output-buffering/">output_buffering</a><a href="/tags/php-ini/">php.ini</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/php/">php</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://peison.github.io/me/2016/01/01/php-ini-learning/" data-title="php.ini 学习-output_buffering及其操作 | peison" data-tsina="18825180172" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/01/27/MarkDown Demo/" title="Markdown Demo">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  Markdown Demo</span>
+</a>
+</div>
+
+
+</nav>
+
+	
+<section class="comment">
+	<div class="ds-thread"></div>
+</section>
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+  <ol class="toc"><li class="toc-item toc-level-5"><a class="toc-link" href="#output_buffering"><span class="toc-number">1.</span> <span class="toc-text">output_buffering</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+			<li><a href="/categories/markdown/" title="markdown">markdown<sup>1</sup></a></li>
+		
+			<li><a href="/categories/php/" title="php">php<sup>2</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+  <div class="tagcloudlist">
+    <p class="asidetitle">标签云</p>
+    <div class="tagcloudlist clearfix">
+       <a href="/tags/markdown/" style="font-size: 10px;">markdown</a> <a href="/tags/output-buffering/" style="font-size: 10px;">output_buffering</a> <a href="/tags/php-ini/" style="font-size: 10px;">php.ini</a> <a href="/tags/xdebug/" style="font-size: 10px;">xdebug</a>
+    </div>
+  </div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+      <li><a href="http://yangjian.me" target="_blank" title="YangJian">Alimon's Blog</a></li>
+      <li><a href="http://www.laruence.com/" target="_blank">鸟哥博客-风雪之隅<a><li>
+    </ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<section class="info">
+		<p> why do I look like a dog <br/>
+			because I&#39;m a developer </p>
+	</section>
+	 
+	<div class="social-font clearfix">
+		
+		<a href="http://weibo.com/2414064223" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/Peison" target="_blank" title="github"></a>
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2016 
+		
+		<a href="http://peison.github.io/me" target="_blank" title="peison">peison</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"null"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
+
+
+
+
+
+  </body>
+</html>
