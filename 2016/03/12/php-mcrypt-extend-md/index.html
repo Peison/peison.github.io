@@ -1,0 +1,377 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  
+    <title>转：php mcrypt 拓展使用 | peison</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="peison">
+    
+    <meta name="description" content="Author:fleshwoundFrom:Security Matrix">
+    
+    
+    
+    
+    <link rel="alternate" href="http://peison.github.io" title="peison" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="peison" title="peison"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="peison">peison</a></h1>
+				<h2 class="blog-motto">too young too simple</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">主页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/me">关于</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:peison.github.io/me">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/03/12/php-mcrypt-extend-md/" title="转：php mcrypt 拓展使用" itemprop="url">转：php mcrypt 拓展使用</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://peison.github.io/me" title="peison">peison</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-03-12T08:02:15.000Z" itemprop="datePublished">2016-03-12</time>
+    更新日期:<time datetime="2016-05-06T07:07:03.327Z" itemprop="dateModified">2016-05-06</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		
+		</div>
+		
+		<blockquote>
+<p>Author:fleshwound<br>From:<a href="http://bbs.php100.com/read-htm-tid-80157.html" target="_blank" rel="external">Security Matrix</a><br><a id="more"></a></p>
+</blockquote>
+<ol>
+<li><p>什么是对称密码算法<br>一个密码系统需要有五个要素部分组成（密文，明文，加密算法，解密算法，密钥）。区别对称与非对称密码算法的关键在于解密密钥是否会等于加密密钥，如果相等，那么就是对称的，不相等就是非对称的。像DES，AES都属于对称密码算法，而RSA,ECC都属于非对称的公钥密码算法。一般而言，对称密码算法加解密速度较快，通常是用来进行数据加密，而非对称的公钥加密算法加解密速度较慢，通常是用来进行数字签名和构造复杂的密码协议。坊间传说的某某公钥加密算法比某某对称加密算法更好更安全实属荒谬，这就好比讨论你的手和脚那个更有用。</p>
+</li>
+<li><p>什么叫做对称密码算法的加密模式<br>这个是很多开发人员搞得不太清楚的东西，毕竟大部分PHP开发者未必都接触过密码学方面的专业培训，因此看到PHP的相关函数感觉望而生畏，不知所措。所谓加密模式就是加密任意长度的消息的使用密码算法的方法。通常对称密码算法都会提供至少四种基本工作模式，其中两组为块模式（ECB和CBC），两组是流模式(CFB和OFB)。打个通俗的比方，密码算法函数就好像个机器，明文就好像原材料，机器不可能一次处理所有明文，那么块模式的策略就是把明文进行分组，然后按照一定的规则放入机器做处理，然后得到一组密文。ECB模式就是将消息分成相互独立的块，每一块都用同一算法和密钥加密（比如使用DES）,块与块之间没有关联。而CBC也是将消息分成相互独立块，但是加密的时候，做了点手脚，使得下一块的密文和上一块的密文有关系，分块加密前与上一块的密文进行异或运算，然后在用同一算法和密钥加密，由于第一块明文没有上一块的密文，所以必须人工指定一个，称之为初始化向量。而CFB和OFB模式把明文看作是二进制流，实际上也是分块的，它们都需要一个初始化向量，不断地生成伪随机二进制流，然后与明文分组进行异或运算，而密文是否参与运算是CFB和OFB之间的区别所在。</p>
+</li>
+<li><p>PHP中的对称密码算法函数<br>PHP的各个版本都提供了相应的对称密码算法函数，所以PHP的开发者们完全没必要自己山寨一个，请相信这些提供的对称密码算法函数绝对比你自己设计的更强大。目前为止，不绝于耳的是各种颜色的客（还有祖传的）据说能够几分钟或者秒破一个密码算法，其实这是误解，除了在看雪论坛上看到几个直接针对密钥的暴力破解实例外，偶在网络上很少见过数学上能攻破一个密码算法的人。之所以系统或软件被破解，是因为密码算法使用不当或者攻击者绕过了密码算法机制。PHP的主要对称密码算法函数来自于Mcrypt函数族。当然这个函数族是PHP的可选部件，需要下载libmcrypt-x.x.tar.gz并在PHP.INI中进行配置。你可以通过phpinfo()来看看自己配置的环境是否支持这些函数。</p>
+</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">mcrypt support: enabled</span><br><span class="line">Version:  <span class="number">2.5</span><span class="number">.8</span>  </span><br><span class="line">Api No: <span class="number">20021217</span>  </span><br><span class="line">Supported ciphers:  cast-<span class="number">128</span> gost rijndael-<span class="number">128</span> twofish arcfour</span><br><span class="line">		cast-<span class="number">256</span> loki97 rijndael-<span class="number">192</span> saferplus wake </span><br><span class="line">		blowfish-compat des rijndael-<span class="number">256</span> serpent xtea </span><br><span class="line">		blowfish enigma rc2 tripledes  </span><br><span class="line">Supported modes:  cbc cfb ctr ecb ncfb nofb ofb stream</span><br></pre></td></tr></table></figure>
+<p>首先我们看到这个函数mcrypt_module_open，原型是：<br><figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">resource mcrypt_module_open ( <span class="built_in">string</span> algorithm, <span class="built_in">string</span> algorithm_directory,</span><br><span class="line"> 			<span class="built_in">string</span> <span class="built_in">mode</span>, <span class="built_in">string</span> mode_directory)</span><br></pre></td></tr></table></figure></p>
+<p>这个函数的作用实际上是创建一个使用对称加密算法的工作环境，告诉PHP要使用何种算法（第一个参数），算法路径在哪里（第二个参数），采用何种工作模式（第三个参数），工作模式描述的路径在哪里(第四个参数).实际使用中我们一般不需要设置第二个参数和第四个参数。现在我们看个例子：</p>
+<figure class="highlight xquery"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">//php拓展中的加密算法研究</span><br><span class="line"></span><br><span class="line">//列举算法种类</span><br><span class="line"><span class="variable">$algorithms</span> = mcrypt_list_algorithms();</span><br><span class="line">sort(<span class="variable">$algorithms</span>);</span><br><span class="line">print_r(<span class="variable">$algorithms</span>);</span><br><span class="line"></span><br><span class="line">//列举加密模式种类</span><br><span class="line"><span class="variable">$models</span> = mcrypt_list_modes();</span><br><span class="line">sort(<span class="variable">$models</span>);</span><br><span class="line">print_r(<span class="variable">$models</span>);</span><br><span class="line"></span><br><span class="line">//生成密钥</span><br><span class="line"><span class="variable">$key</span> = md5(<span class="string">'&lt;3pfg39a&gt;asdkw4=weqwazS98asd*34&amp;34%'</span>);</span><br><span class="line">echo <span class="variable">$key</span>.PHP_EOL;</span><br><span class="line"></span><br><span class="line">//开启加密模块</span><br><span class="line"><span class="variable">$td</span> = mcrypt_module_open(MCRYPT_DES,<span class="string">''</span>,MCRYPT_MODE_ECB,<span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">//生成初始向量</span><br><span class="line"><span class="variable">$iv</span> = mcrypt_create_iv(mcrypt_enc_get_iv_size(<span class="variable">$td</span>),MCRYPT_RAND);</span><br><span class="line"></span><br><span class="line">//获取加密算法密钥的最大长度</span><br><span class="line"><span class="variable">$keySize</span> = mcrypt_enc_get_key_size(<span class="variable">$td</span>);</span><br><span class="line"><span class="variable">$key</span> = substr(<span class="variable">$key</span>,<span class="number">0</span>,<span class="variable">$keySize</span>);</span><br><span class="line"></span><br><span class="line">echo <span class="variable">$keySize</span>.PHP_EOL;</span><br><span class="line"></span><br><span class="line">//初始化加密算法</span><br><span class="line">mcrypt_generic_init(<span class="variable">$td</span>,<span class="variable">$key</span>,<span class="variable">$iv</span>);//初始化加密算法，当算法模式是ecb时候，会自动忽略iv</span><br><span class="line">//加密</span><br><span class="line"><span class="variable">$encrypt</span> =  mcrypt_generic(<span class="variable">$td</span>,<span class="string">'i love you,lindsey'</span>);</span><br><span class="line">//执行清理工作，释放资源</span><br><span class="line">mcrypt_generic_deinit(<span class="variable">$td</span>);</span><br><span class="line"></span><br><span class="line">echo <span class="variable">$encrypt</span>.PHP_EOL;</span><br><span class="line"></span><br><span class="line">//解密，由于<span class="variable">$iv</span>没有被清掉，所以我们还可以继续用这个。实际使用中一定要保存起来</span><br><span class="line"><span class="variable">$iv</span> = mcrypt_create_iv(mcrypt_enc_get_iv_size(<span class="variable">$td</span>),MCRYPT_RAND);</span><br><span class="line">//初始化加密算法</span><br><span class="line">mcrypt_generic_init(<span class="variable">$td</span>,<span class="variable">$key</span>,<span class="variable">$iv</span>);</span><br><span class="line">//解密</span><br><span class="line"><span class="variable">$decrypt</span> = mdecrypt_generic(<span class="variable">$td</span>,<span class="variable">$encrypt</span>);</span><br><span class="line">//执行清理工作,释放资源</span><br><span class="line">mcrypt_generic_deinit(<span class="variable">$td</span>);</span><br><span class="line"></span><br><span class="line">echo <span class="variable">$decrypt</span>.PHP_EOL;</span><br><span class="line"></span><br><span class="line">//关闭加密算法</span><br><span class="line">mcrypt_module_close(<span class="variable">$td</span>);</span><br></pre></td></tr></table></figure>
+<ul>
+<li>这里有几个函数，第一个是mcrypt_createiv，这个是用来创建一个随机的初始化向量IV，四种基本模式中，<br>除了ECB，均要有初始化向量IV。</li>
+<li>mcrypt_generic_init函数用来初始化密码算法对象，包括具体算法的句柄，密钥和初始化向量。<br>当算法模式是ECB时，该函数会自动忽略初始化向量IV。</li>
+<li>接下来利用mcrypt_generic执行加密。加密完成后利用mcrypt_generic_deinit和mcrypt_module_close来释放环境。</li>
+<li>值得注意的是，由于IV生成的时候使用了随机数,<br>所以每次是不一样的，也会导致密文不一样。因此除了ECB模式外，其它三种模式均要把IV记下了，才能进行解密。<br>解密过程和加密过程是一样的，只是函数mcrypt_generic换成了mdecrypt_generic，请注意，别眼花，注意他们的书写上的区别，前者是加密，后者是解密。这个过程是PHP中标准的使用对称密码算法的过程。</li>
+<li>PHP中有些非常陌生的密码算法，比如gost，除非专业搞密码算法的，一般很少人会知道这个算法的具体内容。</li>
+</ul>
+<p>我们可以使用以下PHP的算法信息函数来了解一个算法：<br><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">mcrypt_enc_get_algorithms_name</span> –获取算法具体名称</span><br><span class="line">mcrypt_enc_get_block_size – 获取算法的分组大小</span><br><span class="line">mcrypt_enc_get_iv_size – 获取算法的IV初始化向量大小</span><br><span class="line">mcrypt_enc_get_key_size – 获取算法支持的最大密钥长度</span><br><span class="line">mcrypt_enc_get_modes_name – 获取算法支持的加密模式</span><br><span class="line">mcrypt_enc_get_supported_key_sizes –返回一个数组，里面有算法支持的各种密钥长度</span><br></pre></td></tr></table></figure></p>
+<p>使用方法如下：<br><figure class="highlight xquery"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">    <span class="variable">$td</span> = mcrypt_module_open (MCRYPT_BLOWFISH, <span class="string">''</span>, <span class="string">'ecb'</span>, <span class="string">''</span>);</span><br><span class="line">    echo mcrypt_enc_get_algorithms_name(<span class="variable">$td</span>). <span class="string">"\n"</span>;</span><br><span class="line">    echo mcrypt_enc_get_block_size(<span class="variable">$td</span>). <span class="string">"\n"</span>;</span><br><span class="line">    echo mcrypt_enc_get_iv_size(<span class="variable">$td</span>). <span class="string">"\n"</span>;</span><br><span class="line">    echo mcrypt_enc_get_key_size(<span class="variable">$td</span>). <span class="string">"\n"</span>;</span><br><span class="line">    echo mcrypt_enc_get_modes_name(<span class="variable">$td</span>). <span class="string">"\n"</span>;</span><br><span class="line">    //结果：Blowfish <span class="number">8</span> <span class="number">8</span> <span class="number">56</span> ECB</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure></p>
+<p>PHP中除了上述用法之外，还有一种加密解密的用法。依赖于函数mcrypt_encrypt和mcrypt_decrypt,前者用于加密，后者用于解密。其函数原型为：</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">string </span>mcrypt_encrypt ( <span class="keyword">string </span>cipher, <span class="keyword">string </span>key, <span class="keyword">string </span><span class="preprocessor">data</span>, <span class="keyword">string </span>mode [, <span class="keyword">string </span>iv])</span><br><span class="line"><span class="keyword">string </span>mcrypt_decrypt ( <span class="keyword">string </span>cipher, <span class="keyword">string </span>key, <span class="keyword">string </span><span class="preprocessor">data</span>, <span class="keyword">string </span>mode [, <span class="keyword">string </span>iv])</span><br></pre></td></tr></table></figure>
+<p>我们很容易发现，两个函数的参数都是完全一样的，实际上也只有一样才能正常的加密和解密。这种用法与前述函数用法的区别在于这两个函数把所有的算法信息当作为自己的参数了，习惯于传统PHP开发的人会觉得这个更加易用。先看个代码：</p>
+<figure class="highlight xquery"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">    &lt;?php</span><br><span class="line">     //获取该算法在CBC模式下的IV向量大小</span><br><span class="line">    <span class="variable">$iv</span>_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_CBC); </span><br><span class="line">    <span class="variable">$iv</span> = mcrypt_create_iv(<span class="variable">$iv</span>_size, MCRYPT_RAND); //创建一个初始化IV向量</span><br><span class="line">    <span class="variable">$key</span> = <span class="string">"security matrix"</span>;   //密钥</span><br><span class="line">    <span class="variable">$plaintext</span> = <span class="string">"you should arrive here in eight clock"</span>; //明文</span><br><span class="line">    //直接执行加密</span><br><span class="line">    <span class="variable">$ciphertext</span> = mcrypt_encrypt(MCRYPT_RIJNDAEL_256, <span class="variable">$key</span>, <span class="variable">$plaintext</span>, MCRYPT_MODE_CBC, <span class="variable">$iv</span>); </span><br><span class="line">    echo  <span class="string">"明文是：$plaintext.&lt;br&gt; 密文是: $ciphertext"</span>;</span><br><span class="line">    //执行解密</span><br><span class="line">    <span class="variable">$outtext</span> = mcrypt_decrypt(MCRYPT_RIJNDAEL_256, <span class="variable">$key</span>,<span class="variable">$ciphertext</span>, MCRYPT_MODE_CBC, <span class="variable">$iv</span>); </span><br><span class="line">    echo <span class="string">"&lt;br&gt;"</span>;</span><br><span class="line">    echo  <span class="string">"解密后的明文是:  $outtext&lt;br&gt;"</span>;</span><br><span class="line"></span><br><span class="line">//结果：</span><br><span class="line">//明文是：you should arrive here <span class="keyword">in</span> eight clock.</span><br><span class="line">//密文是: p 蜉?~嵁<span class="string">'mh!Bl廀'</span>Es??&#123; ?e?斤舉* YC¬濤溋C海Rc敻J 偰k躕<span class="string">"蟸v勸</span><br><span class="line">//解密后的明文是: you should arrive here in eight clock</span><br><span class="line">?&gt;</span></span><br></pre></td></tr></table></figure>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/mcrypt/">mcrypt</a><a href="/tags/加密/">加密</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/php/">php</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://peison.github.io/me/2016/03/12/php-mcrypt-extend-md/" data-title="转：php mcrypt 拓展使用 | peison" data-tsina="18825180172" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/05/06/random-generate-number/" title="使用/dev/random和/dev/urandom生成随机数">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  使用/dev/random和/dev/urandom生成随机数</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/02/16/xedbug/"  title="phpStrom xedbug环境配置">
+ <strong>NEXT:</strong><br/> 
+ <span>phpStrom xedbug环境配置
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<section class="comment">
+	<div class="ds-thread"></div>
+</section>
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+  
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+			<li><a href="/categories/markdown/" title="markdown">markdown<sup>1</sup></a></li>
+		
+			<li><a href="/categories/php/" title="php">php<sup>4</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+  <div class="tagcloudlist">
+    <p class="asidetitle">标签云</p>
+    <div class="tagcloudlist clearfix">
+       <a href="/tags/RGN/" style="font-size: 10px;">RGN</a> <a href="/tags/markdown/" style="font-size: 10px;">markdown</a> <a href="/tags/mcrypt/" style="font-size: 10px;">mcrypt</a> <a href="/tags/output-buffering/" style="font-size: 10px;">output_buffering</a> <a href="/tags/php-ini/" style="font-size: 10px;">php.ini</a> <a href="/tags/xdebug/" style="font-size: 10px;">xdebug</a> <a href="/tags/加密/" style="font-size: 10px;">加密</a> <a href="/tags/随机数/" style="font-size: 10px;">随机数</a>
+    </div>
+  </div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+      <li><a href="http://yangjian.me" target="_blank" title="YangJian">Alimon's Blog</a></li>
+      <li><a href="http://www.laruence.com/" target="_blank">鸟哥博客-风雪之隅<a><li>
+    </ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<section class="info">
+		<p> why do I look like a dog <br/>
+			because I&#39;m a developer </p>
+	</section>
+	 
+	<div class="social-font clearfix">
+		
+		<a href="http://weibo.com/2414064223" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/Peison" target="_blank" title="github"></a>
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2016 
+		
+		<a href="http://peison.github.io/me" target="_blank" title="peison">peison</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"null"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
+
+
+
+
+
+  </body>
+</html>
